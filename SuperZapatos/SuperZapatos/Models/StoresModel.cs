@@ -15,6 +15,6 @@ namespace SuperZapatos.Models
         public string Address { get; set; }
 
         //relation with the other model
-        public ICollection<ArticlesModel> Articles { get; set; }
+        public ICollection<ArticlesModel> Articles { get; set; } = new List<ArticlesModel>();
     }
 }

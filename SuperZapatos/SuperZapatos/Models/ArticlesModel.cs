@@ -30,6 +30,6 @@ namespace SuperZapatos.Models
         public int StoreId { get; set; }
 
         // Navigation property to StoresModel
-        public StoresModel Store { get; set; }
+        public StoresModel? Store { get; set; }
     }
 }

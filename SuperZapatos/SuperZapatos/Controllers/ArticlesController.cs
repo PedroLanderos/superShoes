@@ -22,33 +22,81 @@ namespace SuperZapatos.Controllers
 
         // GET: api/Articles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ArticlesModel>>> GetArticles()
+        public async Task<ActionResult<ErrorModel<IEnumerable<ArticlesModel>>>> GetArticles()
         {
-            return await _context.Articles.ToListAsync();
+            try
+            {
+                var articles = await _context.Articles.ToListAsync();
+
+                var response = new ErrorModel<IEnumerable<ArticlesModel>>
+                {
+                    Success = true,
+                    Data = articles,
+                    TotalElements = articles.Count
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = new ErrorModel<IEnumerable<ArticlesModel>>
+                {
+                    Success = false,
+                    ErrorCode = "500",
+                    ErrorMessage = ex.Message
+                };
+
+                return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+            }
         }
 
         // GET: api/Articles/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ArticlesModel>> GetArticlesModel(int id)
+        public async Task<ActionResult<ErrorModel<ArticlesModel>>> GetArticlesModel(int id)
         {
-            var articlesModel = await _context.Articles.FindAsync(id);
-
-            if (articlesModel == null)
+            try
             {
-                return NotFound();
-            }
+                var articlesModel = await _context.Articles.FindAsync(id);
 
-            return articlesModel;
+                if (articlesModel == null)
+                {
+                    return NotFound(new ErrorModel<ArticlesModel>
+                    {
+                        Success = false,
+                        ErrorCode = "404",
+                        ErrorMessage = "Article not found"
+                    });
+                }
+
+                return Ok(new ErrorModel<ArticlesModel>
+                {
+                    Success = true,
+                    Data = articlesModel
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorModel<ArticlesModel>
+                {
+                    Success = false,
+                    ErrorCode = "500",
+                    ErrorMessage = ex.Message
+                });
+            }
         }
 
         // PUT: api/Articles/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutArticlesModel(int id, ArticlesModel articlesModel)
         {
             if (id != articlesModel.Id)
             {
-                return BadRequest();
+                return BadRequest(new ErrorModel<ArticlesModel>
+                {
+                    Success = false,
+                    ErrorCode = "400",
+                    ErrorMessage = "Invalid article ID"
+                });
             }
 
             _context.Entry(articlesModel).State = EntityState.Modified;
@@ -61,7 +109,12 @@ namespace SuperZapatos.Controllers
             {
                 if (!ArticlesModelExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new ErrorModel<ArticlesModel>
+                    {
+                        Success = false,
+                        ErrorCode = "404",
+                        ErrorMessage = "Article not found"
+                    });
                 }
                 else
                 {
@@ -73,30 +126,64 @@ namespace SuperZapatos.Controllers
         }
 
         // POST: api/Articles
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ArticlesModel>> PostArticlesModel(ArticlesModel articlesModel)
+        public async Task<ActionResult<ErrorModel<ArticlesModel>>> PostArticlesModel(ArticlesModel articlesModel)
         {
-            _context.Articles.Add(articlesModel);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Articles.Add(articlesModel);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetArticlesModel", new { id = articlesModel.Id }, articlesModel);
+                var response = new ErrorModel<ArticlesModel>
+                {
+                    Success = true,
+                    Data = articlesModel
+                };
+
+                return CreatedAtAction("GetArticlesModel", new { id = articlesModel.Id }, response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorModel<ArticlesModel>
+                {
+                    Success = false,
+                    ErrorCode = "500",
+                    ErrorMessage = ex.Message
+                });
+            }
         }
 
         // DELETE: api/Articles/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteArticlesModel(int id)
         {
-            var articlesModel = await _context.Articles.FindAsync(id);
-            if (articlesModel == null)
+            try
             {
-                return NotFound();
+                var articlesModel = await _context.Articles.FindAsync(id);
+                if (articlesModel == null)
+                {
+                    return NotFound(new ErrorModel<ArticlesModel>
+                    {
+                        Success = false,
+                        ErrorCode = "404",
+                        ErrorMessage = "Article not found"
+                    });
+                }
+
+                _context.Articles.Remove(articlesModel);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.Articles.Remove(articlesModel);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorModel<ArticlesModel>
+                {
+                    Success = false,
+                    ErrorCode = "500",
+                    ErrorMessage = ex.Message
+                });
+            }
         }
 
         private bool ArticlesModelExists(int id)

@@ -22,33 +22,81 @@ namespace SuperZapatos.Controllers
 
         // GET: api/Stores
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<StoresModel>>> GetStores()
+        public async Task<ActionResult<ErrorModel<IEnumerable<StoresModel>>>> GetStores()
         {
-            return await _context.Stores.ToListAsync();
+            try
+            {
+                var stores = await _context.Stores.ToListAsync();
+
+                var response = new ErrorModel<IEnumerable<StoresModel>>
+                {
+                    Success = true,
+                    Data = stores,
+                    TotalElements = stores.Count
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = new ErrorModel<IEnumerable<StoresModel>>
+                {
+                    Success = false,
+                    ErrorCode = "500",
+                    ErrorMessage = ex.Message
+                };
+
+                return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+            }
         }
 
         // GET: api/Stores/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<StoresModel>> GetStoresModel(int id)
+        public async Task<ActionResult<ErrorModel<StoresModel>>> GetStoresModel(int id)
         {
-            var storesModel = await _context.Stores.FindAsync(id);
-
-            if (storesModel == null)
+            try
             {
-                return NotFound();
-            }
+                var storesModel = await _context.Stores.FindAsync(id);
 
-            return storesModel;
+                if (storesModel == null)
+                {
+                    return NotFound(new ErrorModel<StoresModel>
+                    {
+                        Success = false,
+                        ErrorCode = "404",
+                        ErrorMessage = "Store not found"
+                    });
+                }
+
+                return Ok(new ErrorModel<StoresModel>
+                {
+                    Success = true,
+                    Data = storesModel
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorModel<StoresModel>
+                {
+                    Success = false,
+                    ErrorCode = "500",
+                    ErrorMessage = ex.Message
+                });
+            }
         }
 
         // PUT: api/Stores/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutStoresModel(int id, StoresModel storesModel)
         {
             if (id != storesModel.Id)
             {
-                return BadRequest();
+                return BadRequest(new ErrorModel<StoresModel>
+                {
+                    Success = false,
+                    ErrorCode = "400",
+                    ErrorMessage = "Invalid store ID"
+                });
             }
 
             _context.Entry(storesModel).State = EntityState.Modified;
@@ -61,7 +109,12 @@ namespace SuperZapatos.Controllers
             {
                 if (!StoresModelExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new ErrorModel<StoresModel>
+                    {
+                        Success = false,
+                        ErrorCode = "404",
+                        ErrorMessage = "Store not found"
+                    });
                 }
                 else
                 {
@@ -73,30 +126,64 @@ namespace SuperZapatos.Controllers
         }
 
         // POST: api/Stores
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<StoresModel>> PostStoresModel(StoresModel storesModel)
+        public async Task<ActionResult<ErrorModel<StoresModel>>> PostStoresModel(StoresModel storesModel)
         {
-            _context.Stores.Add(storesModel);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Stores.Add(storesModel);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetStoresModel", new { id = storesModel.Id }, storesModel);
+                var response = new ErrorModel<StoresModel>
+                {
+                    Success = true,
+                    Data = storesModel
+                };
+
+                return CreatedAtAction("GetStoresModel", new { id = storesModel.Id }, response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorModel<StoresModel>
+                {
+                    Success = false,
+                    ErrorCode = "500",
+                    ErrorMessage = ex.Message
+                });
+            }
         }
 
         // DELETE: api/Stores/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStoresModel(int id)
         {
-            var storesModel = await _context.Stores.FindAsync(id);
-            if (storesModel == null)
+            try
             {
-                return NotFound();
+                var storesModel = await _context.Stores.FindAsync(id);
+                if (storesModel == null)
+                {
+                    return NotFound(new ErrorModel<StoresModel>
+                    {
+                        Success = false,
+                        ErrorCode = "404",
+                        ErrorMessage = "Store not found"
+                    });
+                }
+
+                _context.Stores.Remove(storesModel);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.Stores.Remove(storesModel);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorModel<StoresModel>
+                {
+                    Success = false,
+                    ErrorCode = "500",
+                    ErrorMessage = ex.Message
+                });
+            }
         }
 
         private bool StoresModelExists(int id)

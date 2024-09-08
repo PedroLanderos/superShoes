@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SuperZapatos")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7aeb00763fef6c37332e4341d09edbf1dc114b28")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c984fe816cbbe9d9af112eeeee0352929fefb5b2")]
 [assembly: System.Reflection.AssemblyProductAttribute("SuperZapatos")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SuperZapatos")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
